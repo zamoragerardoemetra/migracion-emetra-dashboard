@@ -1,0 +1,18 @@
+name: Despliegue manual EMETRA
+on:
+  workflow_dispatch:
+concurrency:
+  group: dashboard-emetra-production
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, emetra]
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verificar configuración y desplegar
+        run: |
+          test -r /etc/emetra/dashboard.env
+          EMETRA_ENV_FILE=/etc/emetra/dashboard.env docker compose config --quiet
+          EMETRA_ENV_FILE=/etc/emetra/dashboard.env docker compose up --build -d
+          curl -fsS http://127.0.0.1:8080/ >/dev/null

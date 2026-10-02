@@ -1,0 +1,1 @@
+export function Metric({label,value,green=false}:{label:string;value:string|number;green?:boolean}){return <div className="metric"><strong className={green?'green':''}>{value}</strong><small>{label}</small></div>}

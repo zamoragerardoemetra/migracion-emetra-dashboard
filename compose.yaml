@@ -1,0 +1,28 @@
+services:
+  backend:
+    build: ./backend
+    env_file: ${EMETRA_ENV_FILE:-.env}
+    environment:
+      PORT: '3001'
+      NODE_ENV: production
+    restart: unless-stopped
+    networks: [internal]
+  frontend:
+    build: ./frontend
+    environment:
+      BACKEND_URL: http://backend:3001
+      NODE_ENV: production
+    depends_on: [backend]
+    restart: unless-stopped
+    networks: [internal]
+  nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - '127.0.0.1:8080:80'
+    depends_on: [frontend]
+    restart: unless-stopped
+    networks: [internal]
+networks:
+  internal:
