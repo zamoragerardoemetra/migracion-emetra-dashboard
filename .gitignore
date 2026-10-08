@@ -5,3 +5,18 @@
 **/dist/
 **/*.tsbuildinfo
 *.zip
+
+# Credenciales y archivos locales
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+.next/
+certs/
+oracle/
+*.zip
+
+# Respaldos
+*_old*
+src_old*/

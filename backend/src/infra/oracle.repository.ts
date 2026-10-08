@@ -9,8 +9,9 @@ const add=(a:Totals,b:Totals)=>{a.total+=b.total;a.monto+=b.monto;a.totalPagado+
 @Injectable() export class OracleRepository implements DashboardPort,OnModuleInit,OnModuleDestroy {
  private readonly log=new Logger(OracleRepository.name); private pool?:oracledb.Pool;
  async onModuleInit(){const {ORACLE_USER,ORACLE_PASSWORD,ORACLE_CONNECT_STRING}=process.env;if(!ORACLE_USER||!ORACLE_PASSWORD||!ORACLE_CONNECT_STRING)throw new Error('Configure ORACLE_USER, ORACLE_PASSWORD y ORACLE_CONNECT_STRING');
- // Thin funciona con Oracle 12.1+; si la BD exige verificador antiguo, configurar Thick con Instant Client y revisar NJS-116.
- this.pool=await oracledb.createPool({user:ORACLE_USER,password:ORACLE_PASSWORD,connectString:ORACLE_CONNECT_STRING,poolMin:1,poolMax:4,poolIncrement:1,queueTimeout:15000});this.log.log('Pool Oracle inicializado');}
+ // Thin es el modo predeterminado; no cargar Instant Client.
+ if(!oracledb.thin)throw new Error("Este backend requiere Oracle Thin; revise otras llamadas a initOracleClient");
+ this.pool=await oracledb.createPool({user:ORACLE_USER,password:ORACLE_PASSWORD,connectString:ORACLE_CONNECT_STRING,poolMin:1,poolMax:4,poolIncrement:1,queueTimeout:15000});const conn=await this.pool.getConnection();try{await conn.execute('SELECT 1 FROM DUAL');}finally{await conn.close();}this.log.log('Oracle Thin: conexión verificada; pool inicializado');}
  async onModuleDestroy(){await this.pool?.close(10);}
  private async query(sql:string,binds:{inicio:string;fin:string;id_camara?:string}){if(!this.pool)throw new Error('Oracle no inicializado');const conn=await this.pool.getConnection();try {const result=await conn.execute<Record<string,unknown>>(sql,binds,{outFormat:oracledb.OUT_FORMAT_OBJECT});return result.rows??[];} finally {await conn.close();}}
  private async one(sql:string,p:Period){return totals((await this.query(sql,p))[0]);}
